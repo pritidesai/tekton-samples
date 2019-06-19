@@ -11,8 +11,14 @@ spec:
         resourceRef:
           name: openwhisk-nodejs-runtime-git
     params:
+      - name: TARGET_IMAGE_NAME
+        value: "docker.io/pritidesai/openwhisk-nodejs-helloworld"
       - name: DOCKERFILE
         value: "./core/nodejs10Action/knative/Dockerfile"
+      - name: OW_ACTION_NAME
+        value: "nodejs-helloworld"
+      - name: OW_ACTION_CODE
+        value: "function main() {return {payload: 'Hello World!'};}"        
   outputs:
     resources:
       - name: image
