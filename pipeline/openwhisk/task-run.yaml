@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: openwhisk-nodejs-helloworld
+spec:
+  taskRef:
+    name: openwhisk-nodejs-runtime
+  inputs:
+    resources:
+      - name: runtime
+        resourceRef:
+          name: openwhisk-nodejs-runtime-git
+    params:
+      - name: DOCKERFILE
+        value: "./core/nodejs10Action/knative/Dockerfile"
+  outputs:
+    resources:
+      - name: image
+        resourceRef:
+          name: openwhisk-nodejs-runtime-image
