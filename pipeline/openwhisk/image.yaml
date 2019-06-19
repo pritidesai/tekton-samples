@@ -1,0 +1,9 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: openwhisk-runtime
+spec:
+  type: image
+  params:
+    - name: url
+      value: docker.io/${DOCKER_USERNAME}/openwhisk-nodejs-helloworld
