@@ -56,11 +56,16 @@ spec:
           echo "HI"
           pwd
           if [ -z ${OW_PROJECT_URL} ]; then
+            echo "Inside -z OW PROJECT URL"
             OW_ACTION_CODE="${OW_ACTION_CODE}"
           else
+            echo "Inside else -z OW PROJECT URL"
             TEMPDIR="knative-"$((1 + RANDOM % 100))
+            echo $TEMPDIR
             TEMPFILE=`basename "${OW_PROJECT_URL}"`
+            echo $TEMPFILE
             mkdir $TEMPDIR
+            echo "Done creating tempdir"
             cd $TEMPDIR
             wget -O $TEMPFILE "${OW_PROJECT_URL}"
             OW_ACTION_CODE=`cat $TEMPFILE`
