@@ -18,7 +18,9 @@ spec:
       - name: OW_ACTION_NAME
         value: "nodejs-helloworld"
       - name: OW_ACTION_CODE
-        value: "function main() {return {payload: 'Hello World!'};}"        
+        value: "function main() {return {payload: 'Hello World!'};}"
+      - name: OW_PROJECT_URL
+        value: ""
   outputs:
     resources:
       - name: image
