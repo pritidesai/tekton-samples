@@ -71,6 +71,9 @@ spec:
             OW_ACTION_CODE=`cat $TEMPFILE`
             cd ..
           fi
+          echo "Starting to update DOCKERFILe"
+          echo $DOCKERFILE
+          echo pwd
           cat <<EOF >> ${DOCKERFILE}
             ENV __OW_RUNTIME_DEBUG "${OW_RUNTIME_DEBUG}"
             ENV __OW_RUNTIME_PLATFORM "${OW_RUNTIME_PLATFORM}"
