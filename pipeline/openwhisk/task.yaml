@@ -90,4 +90,4 @@ spec:
         - /kaniko/executor
       args:
         - --dockerfile=${inputs.params.DOCKERFILE}
-        - --destination=${outputs.resources.runtime-image.url}:${TARGET_IMAGE_TAG}"
+        - --destination=${outputs.resources.runtime-image.url}
