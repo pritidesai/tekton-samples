@@ -3,6 +3,7 @@ kind: TaskRun
 metadata:
   name: openwhisk-nodejs-helloworld
 spec:
+  serviceAccount: openwhisk-runtime-builder
   taskRef:
     name: openwhisk-nodejs-runtime
   inputs:
