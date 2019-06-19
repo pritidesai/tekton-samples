@@ -53,6 +53,8 @@ spec:
       args:
         - -c
         - |
+          echo "HI"
+          pwd
           if [ -z ${OW_PROJECT_URL} ]; then
             OW_ACTION_CODE="${OW_ACTION_CODE}"
           else
