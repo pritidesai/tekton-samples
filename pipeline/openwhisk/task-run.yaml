@@ -23,6 +23,6 @@ spec:
         value: ""
   outputs:
     resources:
-      - name: image
+      - name: runtime-image
         resourceRef:
           name: openwhisk-nodejs-runtime-image
