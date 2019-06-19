@@ -55,26 +55,26 @@ spec:
         - |
           echo "HI"
           pwd
-          if [ -z ${OW_PROJECT_URL} ]; then
+          if [ -z ${inputs.params.OW_PROJECT_URL} ]; then
             echo "Inside -z OW PROJECT URL"
-            OW_ACTION_CODE="${OW_ACTION_CODE}"
+            OW_ACTION_CODE="${inputs.params.OW_ACTION_CODE}"
           else
             echo "Inside else -z OW PROJECT URL"
             TEMPDIR="knative-"$((1 + RANDOM % 100))
             echo $TEMPDIR
-            TEMPFILE=`basename "${OW_PROJECT_URL}"`
+            TEMPFILE=`basename "${inputs.params.OW_PROJECT_URL}"`
             echo $TEMPFILE
             mkdir $TEMPDIR
             echo "Done creating tempdir"
             cd $TEMPDIR
-            wget -O $TEMPFILE "${OW_PROJECT_URL}"
+            wget -O $TEMPFILE "${inputs.params.OW_PROJECT_URL}"
             OW_ACTION_CODE=`cat $TEMPFILE`
             cd ..
           fi
           echo "Starting to update DOCKERFILe"
-          echo $DOCKERFILE
+          echo ${inputs.params.DOCKERFILE}
           pwd
-          cat <<EOF >> ${DOCKERFILE}
+          cat <<EOF >> ${inputs.params.DOCKERFILE}
             ENV __OW_RUNTIME_DEBUG "${OW_RUNTIME_DEBUG}"
             ENV __OW_RUNTIME_PLATFORM "${OW_RUNTIME_PLATFORM}"
             ENV __OW_ACTION_NAME "${OW_ACTION_NAME}"
@@ -89,5 +89,5 @@ spec:
       command:
         - /kaniko/executor
       args:
-        - --dockerfile=${DOCKERFILE}
-        - --destination=${TARGET_IMAGE_NAME}:${TARGET_IMAGE_TAG}"
+        - --dockerfile=${inputs.params.DOCKERFILE}
+        - --destination=${outputs.resources.runtime-image.url}:${TARGET_IMAGE_TAG}"
