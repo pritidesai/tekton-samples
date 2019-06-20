@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+    generateName: openwhisk-nodejs-runtime-
+spec:
+    pipelineRef:
+        name: pipeline-openwhisk-nodejs-runtime
+    resources:
+        - name: runtime-git
+          resourceRef:
+            name: runtime-git
+    params:
+      - name: TARGET_IMAGE_NAME
+        value: "docker.io/pritidesai/openwhisk-nodejs-helloworld"
+      - name: DOCKERFILE
+        value: "runtime/core/nodejs10Action/knative/Dockerfile"
+      - name: OW_ACTION_NAME
+        value: "nodejs-helloworld"
+      - name: OW_ACTION_CODE
+        value: "function main() {return {payload: 'Hello World!'};}"
+      - name: OW_PROJECT_URL
+        value: ""
+    trigger:
+        type: manual
+    serviceAccount: openwhisk-runtime-builder
