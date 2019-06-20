@@ -4,7 +4,7 @@ metadata:
     name: openwhisk-nodejs-runtime-pipeline
 spec:
     resources:
-      - name: runtime-git
+      - name: openwhisk-nodejs-runtime-git
         type: git
     params:
       - name: TARGET_IMAGE_NAME
@@ -71,6 +71,6 @@ spec:
               value: "${params.OW_PROJECT_URL}"
       resources:
         inputs:
-            - name: runtime-git
-              resource: runtime-git
+            - name: openwhisk-nodejs-runtime-git
+              resource: openwhisk-nodejs-runtime-git
        
