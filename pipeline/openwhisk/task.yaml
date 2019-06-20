@@ -3,6 +3,7 @@ kind: Task
 metadata:
   name: openwhisk-nodejs-runtime
 spec:
+  serviceAccount: openwhisk-runtime-builder
   inputs:
     resources:
       - name: runtime
