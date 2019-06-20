@@ -5,7 +5,7 @@ metadata:
 spec:
   inputs:
     resources:
-      - name: runtime-git
+      - name: openwhisk-nodejs-runtime-git
         type: git
     params:
       - name: TARGET_IMAGE_NAME
