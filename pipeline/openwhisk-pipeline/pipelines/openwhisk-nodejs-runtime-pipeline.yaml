@@ -1,0 +1,76 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+    name: openwhisk-nodejs-runtime-pipeline
+spec:
+    resources:
+      - name: runtime-git
+        type: git
+    params:
+      - name: TARGET_IMAGE_NAME
+        description: name of the image to be tagged and pushed
+      - name: TARGET_IMAGE_TAG
+        description: tag the image before pushing
+        default: "latest"    
+      - name: DOCKERFILE
+        description: The path to the dockerfile to build
+      - name: OW_RUNTIME_DEBUG
+        description: flag to indicate debug mode should be on/off
+        default: "false"
+      - name: OW_RUNTIME_PLATFORM
+        description: flag to indicate the platform, one of ["openwhisk", "knative", ... ]
+        default: "knative"
+      - name: OW_ACTION_NAME
+        description: name of the action
+        default: ""
+      - name: OW_ACTION_CODE
+        description: JavaScript source code to be evaluated
+        default: ""
+      - name: OW_ACTION_MAIN
+        description: name of the function in the "__OW_ACTION_CODE" to call as the action handler
+        default: "main"
+      - name: OW_ACTION_BINARY
+        description: flag to indicate zip function, for zip actions, "__OW_ACTION_CODE" must be base64 encoded string
+        default: "false"
+      - name: OW_HTTP_METHODS
+        description: list of HTTP methods, any combination of [GET, POST, PUT, and DELETE], default is [POST]
+        default: "[POST]"
+      - name: OW_ACTION_RAW
+        description: flag to indicate raw HTTP handling, interpret and process an incoming HTTP body directly
+        default: "false"
+      - name: OW_PROJECT_URL
+        default: ""
+    tasks:
+    - name: openwhisk-nodejs-runtime-image
+      taskRef:
+        name: openwhisk-nodejs-runtime-image
+        params:
+            - name: TARGET_IMAGE_NAME
+              value: "${params.TARGET_IMAGE_NAME}"
+            - name: TARGET_IMAGE_TAG
+              value: "${params.TARGET_IMAGE_TAG}"
+            - name: DOCKERFILE
+              value: "${params.DOCKERFILE}"
+            - name: OW_RUNTIME_DEBUG
+              value: "${params.OW_RUNTIME_DEBUG}"
+            - name: OW_RUNTIME_PLATFORM
+              value: "${params.OW_RUNTIME_PLATFORM}"
+            - name: OW_ACTION_NAME
+              value: "${params.OW_ACTION_NAME}"
+            - name: OW_ACTION_CODE
+              value: "${params.OW_ACTION_CODE}"
+            - name: OW_ACTION_MAIN
+              value: "${params.OW_ACTION_MAIN}"
+            - name: OW_ACTION_BINARY
+              value: "${params.OW_ACTION_BINARY}"
+            - name: OW_HTTP_METHODS
+              value: "${params.OW_HTTP_METHODS}"
+            - name: OW_ACTION_RAW
+              value: "${params.OW_ACTION_RAW}"
+            - name: OW_PROJECT_URL
+              value: "${params.OW_PROJECT_URL}"
+      resources:
+        inputs:
+            - name: runtime-git
+              resource: runtime-git
+       
