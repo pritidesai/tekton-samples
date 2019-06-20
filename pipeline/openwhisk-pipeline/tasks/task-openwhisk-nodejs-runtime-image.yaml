@@ -1,0 +1,89 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: openwhisk-nodejs-runtime-image
+spec:
+  inputs:
+    resources:
+      - name: runtime-git
+        type: git
+    params:
+      - name: TARGET_IMAGE_NAME
+        description: name of the image to be tagged and pushed
+      - name: TARGET_IMAGE_TAG
+        description: tag the image before pushing
+        default: "latest"    
+      - name: DOCKERFILE
+        description: The path to the dockerfile to build
+      - name: OW_RUNTIME_DEBUG
+        description: flag to indicate debug mode should be on/off
+        default: "false"
+      - name: OW_RUNTIME_PLATFORM
+        description: flag to indicate the platform, one of ["openwhisk", "knative", ... ]
+        default: "knative"
+      - name: OW_ACTION_NAME
+        description: name of the action
+        default: ""
+      - name: OW_ACTION_CODE
+        description: JavaScript source code to be evaluated
+        default: ""
+      - name: OW_ACTION_MAIN
+        description: name of the function in the "__OW_ACTION_CODE" to call as the action handler
+        default: "main"
+      - name: OW_ACTION_BINARY
+        description: flag to indicate zip function, for zip actions, "__OW_ACTION_CODE" must be base64 encoded string
+        default: "false"
+      - name: OW_HTTP_METHODS
+        description: list of HTTP methods, any combination of [GET, POST, PUT, and DELETE], default is [POST]
+        default: "[POST]"
+      - name: OW_ACTION_RAW
+        description: flag to indicate raw HTTP handling, interpret and process an incoming HTTP body directly
+        default: "false"
+      - name: OW_PROJECT_URL
+        default: ""
+  steps:
+    - name: add-ow-env-to-dockerfile
+      image: "gcr.io/kaniko-project/executor:debug"
+      command:
+        - /busybox/sh
+      args:
+        - -c
+        - |
+          echo "HI"
+          pwd
+          if [ -z ${inputs.params.OW_PROJECT_URL} ]; then
+            echo "Inside -z OW PROJECT URL"
+            OW_ACTION_CODE="${inputs.params.OW_ACTION_CODE}"
+          else
+            echo "Inside else -z OW PROJECT URL"
+            TEMPDIR="knative-"$((1 + RANDOM % 100))
+            echo $TEMPDIR
+            TEMPFILE=`basename "${inputs.params.OW_PROJECT_URL}"`
+            echo $TEMPFILE
+            mkdir $TEMPDIR
+            echo "Done creating tempdir"
+            cd $TEMPDIR
+            wget -O $TEMPFILE "${inputs.params.OW_PROJECT_URL}"
+            OW_ACTION_CODE=`cat $TEMPFILE`
+            cd ..
+          fi
+          echo "Starting to update DOCKERFILe"
+          echo ${inputs.params.DOCKERFILE}
+          pwd
+          cat <<EOF >> ${inputs.params.DOCKERFILE}
+            ENV __OW_RUNTIME_DEBUG "${OW_RUNTIME_DEBUG}"
+            ENV __OW_RUNTIME_PLATFORM "${OW_RUNTIME_PLATFORM}"
+            ENV __OW_ACTION_NAME "${OW_ACTION_NAME}"
+            ENV __OW_ACTION_CODE "$OW_ACTION_CODE"
+            ENV __OW_ACTION_MAIN "${OW_ACTION_MAIN}"
+            ENV __OW_ACTION_BINARY "${OW_ACTION_BINARY}"
+            ENV __OW_HTTP_METHODS "${OW_HTTP_METHODS}"
+            ENV __OW_ACTION_RAW "${OW_ACTION_RAW}"
+          EOF
+    - name: build-openwhisk-nodejs-runtime
+      image: gcr.io/kaniko-project/executor:latest
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=${inputs.params.DOCKERFILE}
+        - --destination=${inputs.params.TARGET_IMAGE_NAME}:${inputs.params.TARGET_IMAGE_TAG}
