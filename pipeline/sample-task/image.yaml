@@ -3,6 +3,7 @@ kind: PipelineResource
 metadata:
   name: skaffold-image-leeroy-web
 spec:
+  serviceAccount: openwhisk-runtime-builder
   type: image
   params:
     - name: url
