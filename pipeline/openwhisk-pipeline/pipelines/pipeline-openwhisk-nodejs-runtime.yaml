@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Pipeline
 metadata:
-    name: openwhisk-nodejs-runtime-pipeline
+    name: pipeline-openwhisk-nodejs-runtime
 spec:
     resources:
       - name: openwhisk-nodejs-runtime-git
