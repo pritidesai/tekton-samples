@@ -5,10 +5,6 @@ metadata:
 spec:
     pipelineRef:
         name: pipeline-openwhisk-nodejs-runtime
-    resources:
-        - name: openwhisk-nodejs-runtime-git
-          resourceRef:
-            name: openwhisk-nodejs-runtime-git
     params:
       - name: TARGET_IMAGE_NAME
         value: "docker.io/pritidesai/openwhisk-nodejs-helloworld"
