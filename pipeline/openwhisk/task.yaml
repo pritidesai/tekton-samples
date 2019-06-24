@@ -6,7 +6,7 @@ spec:
   serviceAccount: openwhisk-runtime-builder
   inputs:
     resources:
-      - name: openwhisk-nodejs-runtime-git
+      - name: runtime-git
         type: git
     params:
       - name: TARGET_IMAGE_NAME
@@ -44,7 +44,7 @@ spec:
         default: ""
   outputs:
     resources:
-      - name: openwhisk-nodejs-runtime-image
+      - name: runtime-image
         type: image
   steps:
     - name: add-ow-env-to-dockerfile
@@ -91,4 +91,4 @@ spec:
         - /kaniko/executor
       args:
         - --dockerfile=${inputs.params.DOCKERFILE}
-        - --destination=${outputs.resources.openwhisk-nodejs-runtime-image.url}
+        - --destination=${outputs.resources.runtime-image.url}
