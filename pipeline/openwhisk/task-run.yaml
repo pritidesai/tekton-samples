@@ -8,7 +8,7 @@ spec:
     name: openwhisk-nodejs-runtime
   inputs:
     resources:
-      - name: runtime
+      - name: runtime-git
         resourceRef:
           name: openwhisk-nodejs-runtime-git
     params:
