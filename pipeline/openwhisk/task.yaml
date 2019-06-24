@@ -91,4 +91,4 @@ spec:
         - /kaniko/executor
       args:
         - --dockerfile=${inputs.params.DOCKERFILE}
-        - --destination=${outputs.resources.runtime-image.url}
+        - --destination=${outputs.resources.openwhisk-nodejs-runtime-image.url}
