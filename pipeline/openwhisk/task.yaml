@@ -6,7 +6,7 @@ spec:
   serviceAccount: openwhisk-runtime-builder
   inputs:
     resources:
-      - name: runtime
+      - name: openwhisk-nodejs-runtime-git
         type: git
     params:
       - name: TARGET_IMAGE_NAME
@@ -44,7 +44,7 @@ spec:
         default: ""
   outputs:
     resources:
-      - name: runtime-image
+      - name: openwhisk-nodejs-runtime-image
         type: image
   steps:
     - name: add-ow-env-to-dockerfile
