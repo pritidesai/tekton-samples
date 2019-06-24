@@ -15,7 +15,7 @@ spec:
       - name: TARGET_IMAGE_NAME
         value: "docker.io/pritidesai/openwhisk-nodejs-helloworld"
       - name: DOCKERFILE
-        value: "./core/nodejs10Action/knative/Dockerfile"
+        value: "runtime-git/core/nodejs10Action/knative/Dockerfile"
       - name: OW_ACTION_NAME
         value: "nodejs-helloworld"
       - name: OW_ACTION_CODE
