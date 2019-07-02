@@ -3,12 +3,10 @@ kind: Task
 metadata:
   name: openwhisk-nodejs-runtime
 spec:
-  serviceAccount: openwhisk-runtime-builder
   inputs:
     resources:
       - name: runtime-git
         type: git
-        targetPath: /nodejsAction
     params:
       - name: TARGET_IMAGE_NAME
         description: name of the image to be tagged and pushed
@@ -55,44 +53,40 @@ spec:
       args:
         - -c
         - |
-          echo "HI"
-          pwd
-          ls -R -1
-          cd nodejsAction
-          ls -1
           if [ -z ${inputs.params.OW_PROJECT_URL} ]; then
-            echo "Inside -z OW PROJECT URL"
             OW_ACTION_CODE="${inputs.params.OW_ACTION_CODE}"
           else
-            echo "Inside else -z OW PROJECT URL"
             TEMPDIR="knative-"$((1 + RANDOM % 100))
-            echo $TEMPDIR
             TEMPFILE=`basename "${inputs.params.OW_PROJECT_URL}"`
-            echo $TEMPFILE
             mkdir $TEMPDIR
-            echo "Done creating tempdir"
             cd $TEMPDIR
             wget -O $TEMPFILE "${inputs.params.OW_PROJECT_URL}"
             OW_ACTION_CODE=`cat $TEMPFILE`
             cd ..
           fi
-          echo "Starting to update DOCKERFILe"
-          echo ${inputs.params.DOCKERFILE}
-          pwd
           cat <<EOF >> ${inputs.params.DOCKERFILE}
-            ENV __OW_RUNTIME_DEBUG "${OW_RUNTIME_DEBUG}"
-            ENV __OW_RUNTIME_PLATFORM "${OW_RUNTIME_PLATFORM}"
-            ENV __OW_ACTION_NAME "${OW_ACTION_NAME}"
-            ENV __OW_ACTION_CODE "$OW_ACTION_CODE"
-            ENV __OW_ACTION_MAIN "${OW_ACTION_MAIN}"
-            ENV __OW_ACTION_BINARY "${OW_ACTION_BINARY}"
-            ENV __OW_HTTP_METHODS "${OW_HTTP_METHODS}"
-            ENV __OW_ACTION_RAW "${OW_ACTION_RAW}"
+            ENV __OW_RUNTIME_DEBUG "${inputs.params.OW_RUNTIME_DEBUG}"
+            ENV __OW_RUNTIME_PLATFORM "${inputs.params.OW_RUNTIME_PLATFORM}"
+            ENV __OW_ACTION_NAME "${inputs.params.OW_ACTION_NAME}"
+            ENV __OW_ACTION_CODE "${inputs.params.OW_ACTION_CODE}"
+            ENV __OW_ACTION_MAIN "${inputs.params.OW_ACTION_MAIN}"
+            ENV __OW_ACTION_BINARY "${inputs.params.OW_ACTION_BINARY}"
+            ENV __OW_HTTP_METHODS "${inputs.params.OW_HTTP_METHODS}"
+            ENV __OW_ACTION_RAW "${inputs.params.OW_ACTION_RAW}"
           EOF
+    - name: update-dockerfile-for-tekton
+      image: "gcr.io/kaniko-project/executor:debug"
+      command:
+      - sed
+      args:
+      - -i
+      - -e
+      - 's/COPY ./COPY .\/runtime-git/g'
+      - ${inputs.params.DOCKERFILE}
     - name: build-openwhisk-nodejs-runtime
       image: "gcr.io/kaniko-project/executor:latest"
       command:
         - /kaniko/executor
       args:
-        - --dockerfile=/workspace/nodejsAction/core/nodejs10Action/knative/Dockerfile
+        - --dockerfile=${inputs.params.DOCKERFILE}
         - --destination=${outputs.resources.runtime-image.url}
