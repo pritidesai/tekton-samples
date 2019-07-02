@@ -7,4 +7,4 @@ spec:
   type: image
   params:
     - name: url
-      value: docker.io/pritidesai/openwhisk-nodejs-helloworld
+      value: docker.io/${DOCKERHUB_USERNAME}/openwhisk-nodejs-helloworld
