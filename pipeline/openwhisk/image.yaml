@@ -3,7 +3,6 @@ kind: PipelineResource
 metadata:
   name: openwhisk-nodejs-runtime-image
 spec:
-  serviceAccount: openwhisk-runtime-builder
   type: image
   params:
     - name: url
