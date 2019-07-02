@@ -6,6 +6,8 @@ spec:
   serviceAccount: openwhisk-runtime-builder
   taskRef:
     name: openwhisk-nodejs-runtime
+  trigger:
+    type: manual
   inputs:
     resources:
       - name: runtime-git
@@ -13,9 +15,9 @@ spec:
           name: openwhisk-nodejs-runtime-git
     params:
       - name: TARGET_IMAGE_NAME
-        value: "docker.io/pritidesai/openwhisk-nodejs-helloworld"
+        value: "docker.io/${DOCKUERHUB_USERNAME}/openwhisk-nodejs-helloworld"
       - name: DOCKERFILE
-        value: "./core/nodejs10Action/knative/Dockerfile"
+        value: "./runtime-git/core/nodejs10Action/knative/Dockerfile"
       - name: OW_ACTION_NAME
         value: "nodejs-helloworld"
       - name: OW_ACTION_CODE
