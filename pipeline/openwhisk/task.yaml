@@ -8,6 +8,7 @@ spec:
     resources:
       - name: runtime-git
         type: git
+        targetPath: /nodejsAction
     params:
       - name: TARGET_IMAGE_NAME
         description: name of the image to be tagged and pushed
@@ -56,6 +57,9 @@ spec:
         - |
           echo "HI"
           pwd
+          ls -R -1
+          cd nodejsAction
+          ls -1
           if [ -z ${inputs.params.OW_PROJECT_URL} ]; then
             echo "Inside -z OW PROJECT URL"
             OW_ACTION_CODE="${inputs.params.OW_ACTION_CODE}"
@@ -86,9 +90,9 @@ spec:
             ENV __OW_ACTION_RAW "${OW_ACTION_RAW}"
           EOF
     - name: build-openwhisk-nodejs-runtime
-      image: gcr.io/kaniko-project/executor:latest
+      image: "gcr.io/kaniko-project/executor:latest"
       command:
         - /kaniko/executor
       args:
-        - --dockerfile=${inputs.params.DOCKERFILE}
+        - --dockerfile=/workspace/nodejsAction/core/nodejs10Action/knative/Dockerfile
         - --destination=${outputs.resources.runtime-image.url}
