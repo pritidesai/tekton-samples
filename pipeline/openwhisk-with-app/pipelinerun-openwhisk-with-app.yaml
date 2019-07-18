@@ -1,0 +1,233 @@
+# Git Pipeline Resource for OpenWhisk NodeJS Runtime
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+    name: openwhisk-nodejs-runtime-git
+spec:
+    type: git
+    params:
+        - name: revision
+          value: master
+        - name: url
+          value: https://github.com/apache/incubator-openwhisk-devtools.git
+
+---
+# Git Pipeline Resource for OpenWhisk NodeJS Hello World Application
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+    name: openwhisk-nodejs-helloworld-git
+spec:
+    type: git
+    params:
+        - name: revision
+          value: master
+        - name: url
+          value: https://github.com/apache/incubator-openwhisk-test.git
+
+---
+# Image Pipeline Resource for OpenWhisk NodeJS Hello World Application 
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+    name: openwhisk-nodejs-helloworld-image
+spec:
+    type: image
+    params:
+        - name: url
+          value: docker.io/${DOCKER_USERNAME}/openwhisk-nodejs-helloworld
+
+---
+# Docker Registry Secret
+apiVersion: v1
+kind: Secret
+metadata:
+    name: dockerhub-user-pass
+    annotations:
+        tekton.dev/docker-0: https://index.docker.io/v1/
+type: kubernetes.io/basic-auth
+stringData:
+    username: ${DOCKER_USERNAME}
+    password: ${DOCKER_PASSWORD}
+
+---
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+    name: openwhisk-runtime-builder
+secrets:
+    - name: dockerhub-user-pass
+
+---
+# Task to build OpenWhisk Runtime Image with the Application Source
+
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+    name: task-openwhisk-nodejs-runtime
+spec:
+    inputs:
+        resources:
+            - name: runtime-git
+              type: git
+            - name: app-git
+              type: git
+              targetPath: app
+        params:
+            - name: TARGET_IMAGE_NAME
+              description: name of the image to be tagged and pushed
+            - name: TARGET_IMAGE_TAG
+              description: tag the image before pushing
+              default: "latest"
+            - name: DOCKERFILE
+              description: The path to the dockerfile to build
+            - name: OW_RUNTIME_DEBUG
+              description: flag to indicate debug mode should be on/off
+              default: "false"
+            - name: OW_RUNTIME_PLATFORM
+              description: flag to indicate the platform, one of ["openwhisk", "knative", ... ]
+              default: "knative"
+            - name: OW_ACTION_NAME
+              description: name of the action
+              default: ""
+            - name: OW_ACTION_CODE
+              description: JavaScript source code to be evaluated
+              default: ""
+            - name: OW_ACTION_MAIN
+              description: name of the function in the "__OW_ACTION_CODE" to call as the action handler
+              default: "main"
+            - name: OW_ACTION_BINARY
+              description: flag to indicate zip function, for zip actions, "__OW_ACTION_CODE" must be base64 encoded string
+              default: "false"
+            - name: OW_HTTP_METHODS
+              description: list of HTTP methods, any combination of [GET, POST, PUT, and DELETE], default is [POST]
+              default: "[POST]"
+            - name: OW_ACTION_RAW
+              description: flag to indicate raw HTTP handling, interpret and process an incoming HTTP body directly
+              default: "false"
+            - name: OW_PROJECT_URL
+              default: ""
+    outputs:
+        resources:
+            - name: runtime-image
+              type: image
+    steps:
+        - name: add-ow-env-to-dockerfile
+          image: "gcr.io/kaniko-project/executor:debug"
+          command:
+            - /busybox/sh
+          args:
+            - -c
+            - |
+              if [ -z ${inputs.params.OW_PROJECT_URL} ]; then
+                OW_ACTION_CODE="${inputs.params.OW_ACTION_CODE}"
+              else
+                TEMPDIR="knative-"$((1 + RANDOM % 100))
+                TEMPFILE=`basename "${inputs.params.OW_PROJECT_URL}"`
+                mkdir $TEMPDIR
+                cd $TEMPDIR
+                wget -O $TEMPFILE "${inputs.params.OW_PROJECT_URL}"
+                OW_ACTION_CODE=`cat $TEMPFILE`
+                cd ..
+              fi
+              cat <<EOF >> ${inputs.params.DOCKERFILE}
+                ENV __OW_RUNTIME_DEBUG "${inputs.params.OW_RUNTIME_DEBUG}"
+                ENV __OW_RUNTIME_PLATFORM "${inputs.params.OW_RUNTIME_PLATFORM}"
+                ENV __OW_ACTION_NAME "${inputs.params.OW_ACTION_NAME}"
+                ENV __OW_ACTION_CODE "${inputs.params.OW_ACTION_CODE}"
+                ENV __OW_ACTION_MAIN "${inputs.params.OW_ACTION_MAIN}"
+                ENV __OW_ACTION_BINARY "${inputs.params.OW_ACTION_BINARY}"
+                ENV __OW_HTTP_METHODS "${inputs.params.OW_HTTP_METHODS}"
+                ENV __OW_ACTION_RAW "${inputs.params.OW_ACTION_RAW}"
+                ENV __OW_PROJECT_URL "${inputs.params.OW_PROJECT_URL}"
+              EOF
+        - name: update-dockerfile-for-tekton
+          image: "gcr.io/kaniko-project/executor:debug"
+          command:
+            - sed
+          args:
+            - -i
+            - -e
+            - 's/COPY ./COPY .\/runtime-git/g'
+            - ${inputs.params.DOCKERFILE}
+        - name: update-dockerfile-for-app
+          image: "gcr.io/kaniko-project/executor:debug"
+          command:
+            - /busybox/sh
+          args:
+            - -c
+            - |
+              cat <<EOF >> ${inputs.params.DOCKERFILE}
+                RUN mkdir app
+                COPY app ./app
+              EOF
+        - name: build-openwhisk-nodejs-runtime
+          image: "gcr.io/kaniko-project/executor:latest"
+          command:
+            - /kaniko/executor
+          args:
+            - --dockerfile=${inputs.params.DOCKERFILE}
+            - --destination=${outputs.resources.runtime-image.url}
+---
+
+# Pipeline to download OpenWhisk App source and build NodeJS image with the source
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+    name: pipeline-openwhisk-nodejs-helloworld
+spec:
+    resources:
+        - name: pipeline-runtime-git
+          type: git
+        - name: pipeline-runtime-image
+          type: image
+        - name: pipeline-app-git
+          type: git
+    tasks:
+        - name: build-openwhisk-nodejs-runtime
+          taskRef:
+            name: task-openwhisk-nodejs-runtime
+          params:
+            - name: TARGET_IMAGE_NAME
+              value: "docker.io/${DOCKUERHUB_USERNAME}/openwhisk-nodejs-helloworld"
+            - name: DOCKERFILE
+              value: "./runtime-git/knative-build/runtimes/javascript/Dockerfile"
+            - name: OW_ACTION_NAME
+              value: "nodejs-helloworld"
+            - name: OW_ACTION_CODE
+              value: ""
+            - name: OW_PROJECT_URL
+              value: "./app/packages/left-pad"
+            - name: OW_ACTION_BINARY
+              value: "true"
+          resources:
+            inputs:
+                - name: runtime-git
+                  resource: pipeline-runtime-git
+                - name: app-git
+                  resource: pipeline-app-git
+            outputs:
+                - name: runtime-image
+                  resource: pipeline-runtime-image
+---
+
+# Pipeline Run
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineRun
+metadata:
+    name: pipeline-run-openwhisk-nodejs-helloworld
+spec:
+    pipelineRef:
+        name: pipeline-openwhisk-nodejs-helloworld
+    serviceAccount: openwhisk-runtime-builder
+    resources:
+        - name: pipeline-runtime-git
+          resourceRef:
+            name: openwhisk-nodejs-runtime-git
+        - name: pipeline-runtime-image
+          resourceRef:
+            name: openwhisk-nodejs-helloworld-image
+        - name: pipeline-app-git
+          resourceRef:
+            name: openwhisk-nodejs-helloworld-git
